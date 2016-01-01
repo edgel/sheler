@@ -1,2 +1,6 @@
+== 2014-12-15, Shelib 1.1 ==
+- Add option -e for method "$sh exec"
+- Change "$sh sdf" to "$sh done"
+
 == 2014-09-15, Shelib 1.0 ==
 - Init Version, Provide basic simple commands for bash
