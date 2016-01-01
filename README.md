@@ -1,2 +1,2 @@
 # shelib
-sh build.sh
+Shell Library ($sh), a new simple shell api for bash.
