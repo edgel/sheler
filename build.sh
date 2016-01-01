@@ -13,10 +13,10 @@
 #   export SHELIB_VERSION="1.0"; sh build.sh -c; sh build.sh -d; sh build.sh -x; sh build.sh -a;
 ###################################################################################################
 
-SHELIB="./main/.shelib.rc"; SHELIB_DEMO="./test/test.sh"; SHELIB_BUILD="./build.sh";
+SHELIB="./main/.shelib.rc"; SHELIB_TEST="./test/test.sh"; SHELIB_BUILD="./build.sh";
 
-if [ ! -f $SHELIB] || [ ! -f $SHELIB_DEMO ] ; then
-  echo "No [$SHELIB] and [$SHELIB_DEMO] found!"; exit 1;
+if [ ! -f $SHELIB] || [ ! -f $SHELIB_TEST ] ; then
+  echo "No [$SHELIB] and [$SHELIB_TEST] found!"; exit 1;
 fi
 . $SHELIB;
 
@@ -40,8 +40,8 @@ if [ "-c" == "$1" ] ; then
     $sh sdf -c $0; 
     $sh info "## The result: [$?] ##"; exit $?;
   else
-    $sh info "Clean script step for ./demo/demo.sh ${_args:2}";
-    $sh sdf -r ./demo/demo.sh ${_args:2};
+    $sh info "Clean script step for ./test/test.sh ${_args:2}";
+    $sh sdf -r ./test/test.sh ${_args:2};
     $sh info "## The result: [$?] ##"; exit $?;
   fi
 fi
@@ -55,7 +55,7 @@ if [ ! -f $SHELIB_RELEASE/shelib-$_version.tgz ] ; then
 
   sed "s/^# Version: {{SHELIB_VERSION}}/# Version: $SHELIB_VERSION/g" $SHELIB > $SHELIB_TARGET;
   #cp $SHELIB $SHELIB_RELEASE/shelib-$SHELIB_VERSION/;
-  cp $SHELIB_DEMO $SHELIB_RELEASE/shelib-$SHELIB_VERSION/;
+  cp $SHELIB_TEST $SHELIB_RELEASE/shelib-$SHELIB_VERSION/;
   cp $SHELIB_BUILD $SHELIB_RELEASE/shelib-$SHELIB_VERSION/;
 
   cd $SHELIB_RELEASE/; 
@@ -69,7 +69,7 @@ fi
 ###################################################################################################
 
 echo '';
-$sh info "Start run $SHELIB_DEMO $_args";
+$sh info "Start run $SHELIB_TEST $_args";
 if [ "-a" == "$1" ] ; then 
   if [ "latest" != "$SHELIB_VERSION" ] ; then
     $sh info "Archive shelib-$SHELIB_VERSION";
@@ -80,9 +80,9 @@ if [ "-a" == "$1" ] ; then
     $sh info "Define version first. such as: export SHELIB_VERSION=\"1.0\";";
   fi
 elif [ "-d" == "$1" ] ; then
-  $sh exec -l $SHELIB_DEMO ${_args:2};
+  $sh exec -l $SHELIB_TEST ${_args:2};
 elif [ "-x" == "$1" ] ; then
-  cd demo; $sh exec -x demo.sh ${_args:2}; 
+  cd test; $sh exec -x test.sh ${_args:2}; 
 fi
 $sh info "## The result: [$?] ##";
 
