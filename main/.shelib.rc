@@ -1,33 +1,30 @@
 ###############################################################################
 #!/bin/bash
 # 
-# Shell Library ($sh), a new simple shell api for bash.
+# Shell Library ($sh), a simple shell library for the bash scripts.
 # 
-# Version: 1.0
+# Version: 1.1
 # 
 # Methods:
-#   trace;
-#   debug;
-#   info;
-#   warn;
-#   error;
-#   enable;
-#   disable;
+#   $sh exec <-e|-l|-x> <command>;
 # 
-#   fref -d <ref-path> | -f <ref-path> | -n <ref-path>;
-#   fman -rm|-ls|-cp|-mv|-ln <folder> <filename-pattern>;
-#   copy -|<owner> <''|.tar|.tgz|.tar.gz|.zip> <name> <from> <to>;
+#   $sh steps <step-name:id> * ;
+#   $sh step -s | -d | <step-name> [step-id];
+#   $sh done -p [shell-path] | -c [shell-path] | -r [shell-path] <step-id>;
 # 
-#   sdf -p [shell-path] | -c [shell-path] | -r [shell-path] <step-id>;
-#   step -s | -d | <step-name> [step id];
-#   steps <step-name:id> * ;
+#   $sh enable <debug | info | warn | error>;
+#   $sh disable <debug | info | warn | error>;
+#   $sh logf <msg> | debug <msg> | info <msg> | warn <msg> | error <msg>;
 # 
-#   exec -l <shell-path> <arguments> | -x <shell-path> <arguments>;
+#   $sh fref -d <ref-path> | -f <ref-path> | -n <ref-path> | -p <ref-path>;
+#   $sh fman -rm|-ls|-cp|-mv|-ln <folder> <filename-pattern>;
+#   $sh copy -|<owner> <''|.tar|.tgz|.tar.gz|.zip> <name> <from> <to>;
 # 
 # Global varibles:
-#   shelib_enable_debug, 
-#   shelib_curr_step_id, 
-#   shelib_step_done_file
+#   shelib_enable_<debug|info|warn|error>
+# 
+# Internal varibles:
+#   shelib_fref_path, shelib_done_file, shelib_curr_stepid
 # 
 # Dependencies: 
 #   echo, pwd, ls, cat, grep, cut, sed, date, rm, mkdir, chown, diranme, 
@@ -36,44 +33,195 @@
 
 ###############################################################################
 
-_shelib_trace(){
+_shelib(){
+  if [ ! -z "$2" ] ; then
+    _shelib_$1 ${@:2}; # exec the shelib methods
+  fi
+}
+
+if [ ! -z "$sh" ] ; then
+  _sh=$sh; _shelib__trace "Var _sh vs sh: [$_sh, $sh]";
+fi
+
+sh=_shelib; # define $sh as the short func name
+
+###############################################################################
+
+_shelib__init(){
+  _shelib__trace "Current script folder: $(_shelib_fref -d), filename: $(_shelib_fref -n), args: [$@]"
+
+  shelib_fref_path=$(_shelib_fref -r); _shelib__trace "Init the refer path: $shelib_fref_path";
+  if [ ! -d "$(dirname $shelib_fref_path)" ] ; then
+    _shelib__trace "Create dir $(dirname $shelib_fref_path)"; mkdir -p $(dirname $shelib_fref_path);
+  fi
+
+  shelib_done_file=$(_shelib_done -p); _shelib__trace "Init the done file: $shelib_done_file";
+  if [ ! -f "$shelib_done_file" ] ; then
+    _shelib__trace "Create file $(basename $shelib_done_file) in dir $(dirname $shelib_done_file)";
+    mkdir -p $(dirname $shelib_done_file) && > $shelib_done_file;
+  fi
+}
+
+###############################################################################
+
+_shelib_exec(){
+  if [ "-e" == "$1" ] ; then
+    ${@:2}; _result=$?;
+  elif [ "-l" == "$1" ] ; then
+    if [ -f $shelib_fref_path.log ] ; then
+      ( echo -e "\n--\n" && cat $shelib_fref_path.log ) >> $shelib_fref_path.log.x;
+    fi
+    _shelib_4tee $shelib_fref_path.log.rs ${@:2} 2>&1 | tee $shelib_fref_path.log; 
+    _result=$(cat $shelib_fref_path.log.rs; rm -f $shelib_fref_path.log.rs);
+  elif [ "-x" == "$1" ] ; then
+    if [ -f $shelib_fref_path.lxg ] ; then
+      ( echo -e "\n--\n" && cat $shelib_fref_path.lxg ) >> $shelib_fref_path.lxg.x;
+    fi
+    # PS4 Other Options: ${SHLVL},${BASH_SUBSHELL} $@ $? $1 \t
+    set -x; PS4='	| ${BASH_SOURCE} ${LINENO} ${FUNCNAME}() ' \
+    _shelib_4tee $shelib_fref_path.lxg.rs ${@:2} 2>&1 | tee $shelib_fref_path.lxg;
+    _result=$(cat $shelib_fref_path.lxg.rs; rm -f $shelib_fref_path.lxg.rs);
+  fi
+  _shelib__trace "The command exec result: $_result"; if [ "0" != "$_result" ] ; then
+    exit $_result;
+  fi
+}
+
+_shelib_4tee(){
+  ${@:2}; echo $? > $1; # _shelib__exec <result-file> <command>
+}
+
+#count file num: num=$(ls $shelib_fref_path.lxg* | wc -l)
+
+###############################################################################
+
+_shelib_steps(){
+  _user_steps=$@; # def the user steps to exec
+  if [ $# -eq 1 ] ; then
+    _user_steps=`eval echo $1`;
+  elif [ $# -gt 1 ] ; then
+    if [ "`eval echo $1`" != "$1" ] ; then
+      _user_steps=`eval echo ${@:2}`;
+    fi
+  fi
+  for _step_id in $_user_steps ; do
+    _step_name=$(echo $_step_id|cut -d : -f 1);
+    _shelib_step $_step_name $_step_id; 
+  done
+}
+
+_shelib_step(){
+  if [ $1 == '-s' ] ; then
+    _history=$(cat $(echo $shelib_done_file) | grep "^$(echo $shelib_curr_stepid) done at ");
+    if [ ! -z "$_history" ] ; then
+      _shelib__trace Skip step $shelib_curr_stepid;
+      echo $shelib_curr_stepid skip at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_done_file
+      return 1;
+    fi
+    _history=$(cat $(echo $shelib_done_file) | grep "^$(echo $shelib_curr_stepid) start at ");
+    if [ ! -z "$_history" ] ; then
+      _shelib__trace Resume step $shelib_curr_stepid ...;
+      echo $shelib_curr_stepid resume at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_done_file
+      return 0;
+    fi
+    _shelib__trace Start step $shelib_curr_stepid ...;
+    echo $shelib_curr_stepid start at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_done_file
+
+  elif [ $1 == '-d' ] ; then
+    _history=$(cat $(echo $shelib_done_file) | grep "^$(echo $shelib_curr_stepid) quit at ");
+    if [ ! -z "$_history" ] ; then
+      return 0;
+    fi
+    _result_curr_step=$2;
+    if [ $_result_curr_step -ne 0 ] ; then
+      exit $_result_curr_step;
+    fi
+    _shelib__trace Done step $shelib_curr_stepid;
+    echo $shelib_curr_stepid done at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_done_file
+
+  elif [ $1 == '-q' ] ; then
+    _result_curr_step=$2;
+    if [ $_result_curr_step -ne 0 ] ; then
+      exit $_result_curr_step;
+    fi
+    _shelib__trace Quit step $shelib_curr_stepid;
+    echo $shelib_curr_stepid quit at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_done_file
+
+  else  
+    _name_curr_step=$1; shelib_curr_stepid=$2; 
+    if [ -z "$shelib_curr_stepid" ] ; then
+      shelib_curr_stepid=$_name_curr_step;
+    fi
+    _shelib__trace "-----------------------------------------------------------------------------";
+    _shelib__trace "-- Exec step { name: $_name_curr_step, id: $shelib_curr_stepid }";
+    _shelib__trace "-- ";
+    _shelib_step -s;
+    if [ $? -eq 0 ] ; then
+      $_name_curr_step; _shelib_step -d $?;
+    fi
+  fi
+}
+
+_shelib_done(){
+  if [ "$1" == "-p" ] ; then # clean
+    echo ~/.step$(_shelib_fref -r $2).done;
+  elif [ "$1" == "-c" ] ; then # clean
+    _shelib__trace "Clean done files for $2";
+    _shelib_fman -rm "$(dirname `_shelib_done -p $2`)" "*.done";
+  elif [ "$1" == "-r" ] ; then # reset
+    for _step_id in ${@:3} ; do
+      _done_file=$(_shelib_done -p $2);
+      _shelib__trace "Reset step id: $_step_id, script: $2, file: $_done_file"; 
+      sed "s/^$_step_id done at /$_step_id ---- at /g" $_done_file > $_done_file.tmp \
+      && echo "----" >>  $_done_file.old && cat $_done_file >> $_done_file.old \
+      && mv $_done_file.tmp $_done_file && rm $_done_file.old;
+      _shelib__trace "Clean done with $?"; 
+    done
+  fi
+}
+
+###############################################################################
+
+_shelib__trace(){
   if [ "$shelib_enable_trace" != "false" ] ; then
     echo ">> $@"
   fi
 }
 
+_shelib_logf(){
+  echo "$(date +%Y-%m-%d' '%H:%M:%S.%N) [$0] $@"
+}
+
 _shelib_debug(){
   if [ "$shelib_enable_debug" == "true" ] ; then
-    _shelib__log [DEBUG] $@;
+    _shelib_logf [DEBUG] $@;
   fi
 }
 
 _shelib_info(){
-  _shelib__log [INFO] $@;
+  if [ "$shelib_enable_info" != "false" ] ; then
+    _shelib_logf [INFO] $@;
+  fi
 }
 
 _shelib_warn(){
-  _shelib__log [WARN] $@;
+  if [ "$shelib_enable_warn" != "false" ] ; then
+    _shelib_logf [WARN] $@;
+  fi
 }
 
 _shelib_error(){
-  _shelib__log [ERROR] $@;
+  if [ "$shelib_enable_error" != "false" ] ; then
+    _shelib_logf [ERROR] $@;
+  fi
 }
 
 _shelib_enable(){
-  if [ "$1" == "debug" ] ; then
-    shelib_enable_debug="true";
-  fi
+  export shelib_enable_$1="true";
 }
 
 _shelib_disable(){
-  if [ "$1" == "debug" ] ; then
-    shelib_enable_debug="false";
-  fi
-}
-
-_shelib__log(){
-  echo "$(date +%Y-%m-%d' '%H:%M:%S.%N) [$0] $@"
+  export shelib_enable_$1="false";
 }
 
 ###############################################################################
@@ -89,6 +237,8 @@ _shelib_fref(){
     basename $_filepath;
   elif [ "$1" == "-n" ] ; then
     _file=$(_shelib_fref -f $2); echo ${_file%.*};
+  elif [ "$1" == "-r" ] ; then
+    echo $(_shelib_fref -d $2)/$(_shelib_fref -n $2);
   fi
 }
 
@@ -108,11 +258,11 @@ _shelib_fman(){
 
 _shelib_copy(){
   if [ $# -ne 5 ] ; then
-    _shelib_trace "Usage: copy -|<owner> <''|.tar|.tgz|...> <name> <from> <to>"; 
+    _shelib__trace "Usage: copy -|<owner> <''|.tar|.tgz|...> <name> <from> <to>"; 
     return 1;
   fi
 
-  _shelib_trace "Add owner:$1,type=$2,name=$3,file=$3$2,from=$4/,to=$5/";
+  _shelib__trace "Add owner:$1,type=$2,name=$3,file=$3$2,from=$4/,to=$5/";
   _owner=$1; _type=$2; _name=$3; _file=$3$2; _from=$4/; _to=$5/;
 
   mkdir -p $_to; scp -i ~/.ssh/id_rsa $_from$_file $_to;
@@ -121,152 +271,23 @@ _shelib_copy(){
   fi
 
   if [ "$_type" == ".zip" ] ; then
-    _shelib_trace "Unzip file $_file"; cd $_to && unzip $_file && rm -f $_file; cd -;
+    _shelib__trace "Unzip file $_file"; cd $_to && unzip $_file && rm -f $_file; cd -;
   elif [ "$_type" == ".tar" ] ; then
-    _shelib_trace "Untar file $_file"; cd $_to && tar xvf $_file && rm -f $_file; cd -;
+    _shelib__trace "Untar file $_file"; cd $_to && tar xvf $_file && rm -f $_file; cd -;
   elif [ "$_type" == ".tgz" ] || [ "$_type" == ".tar.gz" ] ; then
-    _shelib_trace "Untar file $_file"; cd $_to && tar xzvf $_file && rm -f $_file; cd -;
+    _shelib__trace "Untar file $_file"; cd $_to && tar xzvf $_file && rm -f $_file; cd -;
   fi
 
   if [ "$_owner" != "-" ] ; then
-    _shelib_trace "Chang owner to $_owner for $_to$_name";
+    _shelib__trace "Chang owner to $_owner for $_to$_name";
     chown -R $_owner $_to$_name;
   fi
-  ls -l $_to; _shelib_trace "Add done for file $_file";
+  ls -l $_to; _shelib__trace "Add done for file $_file";
 }
 
 ###############################################################################
-
-_shelib_sdf(){
-  if [ "$1" == "-p" ] ; then # clean
-    echo ~/.step$(_shelib_fref -d $2)/$(_shelib_fref -n $2).done;
-  elif [ "$1" == "-c" ] ; then # clean
-    _shelib_trace "Clean done files for $2";
-    _shelib_fman -rm "$(dirname `_shelib_sdf -p $2`)" "*.done";
-  elif [ "$1" == "-r" ] ; then # reset
-    for _step_id in ${@:3} ; do
-      _step_done_file=~/.step$(_shelib_fref -d $2)/$(_shelib_fref -n $2).done;
-      _shelib_trace "Reset step id: $_step_id, script: $2, file: $_step_done_file"; 
-      sed "s/^$_step_id done at /$_step_id ---- at /g" $_step_done_file > $_step_done_file.tmp \
-      && echo "----" >>  $_step_done_file.old && cat $_step_done_file >> $_step_done_file.old \
-      && mv $_step_done_file.tmp $_step_done_file && rm $_step_done_file.old;
-      _shelib_trace "Clean done with $?"; 
-    done
-  fi
-}
-
-_shelib_step(){
-  if [ $1 == '-s' ] ; then
-    _history=$(cat $(echo $shelib_step_done_file) | grep "^$(echo $shelib_curr_step_id) done at ");
-    if [ ! -z "$_history" ] ; then
-      _shelib_info skip $shelib_curr_step_id;
-      echo $shelib_curr_step_id skip at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_step_done_file
-      return 1;
-    fi
-    _history=$(cat $(echo $shelib_step_done_file) | grep "^$(echo $shelib_curr_step_id) start at ");
-    if [ ! -z "$_history" ] ; then
-      _shelib_info resume $shelib_curr_step_id ...;
-      echo $shelib_curr_step_id resume at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_step_done_file
-      return 0;
-    fi
-    _shelib_info start $shelib_curr_step_id ...;
-    echo $shelib_curr_step_id start at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_step_done_file
-
-  elif [ $1 == '-d' ] ; then
-    _history=$(cat $(echo $shelib_step_done_file) | grep "^$(echo $shelib_curr_step_id) quit at ");
-    if [ ! -z "$_history" ] ; then
-      return 0;
-    fi
-    _result_curr_step=$2;
-    if [ $_result_curr_step -ne 0 ] ; then
-      exit $_result_curr_step;
-    fi
-    _shelib_info done $shelib_curr_step_id;
-    echo $shelib_curr_step_id done at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_step_done_file
-
-  elif [ $1 == '-q' ] ; then
-    _result_curr_step=$2;
-    if [ $_result_curr_step -ne 0 ] ; then
-      exit $_result_curr_step;
-    fi
-    _shelib_info quit $shelib_curr_step_id;
-    echo $shelib_curr_step_id quit at $(date +%Y-%m-%d' '%H:%M:%S.%N) >> $shelib_step_done_file
-
-  else  
-    _name_curr_step=$1; shelib_curr_step_id=$2; 
-    if [ -z "$shelib_curr_step_id" ] ; then
-      shelib_curr_step_id=$_name_curr_step;
-    fi
-    _shelib_trace "-----------------------------------------------------------------------------";
-    _shelib_trace "-- Exec step { name: $_name_curr_step, id: $shelib_curr_step_id }";
-    _shelib_trace "-- ";
-    _shelib_step -s;
-    if [ $? -eq 0 ] ; then
-      $_name_curr_step; _shelib_step -d $?;
-    fi
-  fi
-}
-
-_shelib_steps(){
-  _user_steps=$@; # def the user steps to exec
-  if [ $# -eq 1 ] ; then
-    _user_steps=`eval echo $1`;
-  elif [ $# -gt 1 ] ; then
-    if [ "`eval echo $1`" != "$1" ] ; then
-      _user_steps=`eval echo ${@:2}`;
-    fi
-  fi
-  for _step_id in $_user_steps ; do
-    _step_name=$(echo $_step_id|cut -d : -f 1);
-    _shelib_step $_step_name $_step_id; 
-  done
-}
-
-###############################################################################
-
-_shelib_exec(){
-  if [ "-l" == "$1" ] ; then
-    sh ${@:2} 2>&1 | tee $(_shelib_fref -d $2)/$(_shelib_fref -n $2).log;
-  fi
-  if [ "-x" == "$1" ] ; then
-    # PS4 Other Options: ${SHLVL},${BASH_SUBSHELL} $@ $? $1 \t
-    PS4='	| ${BASH_SOURCE} ${LINENO} ${FUNCNAME}() ' sh -x ${@:2} 2>&1 \
-    | tee $(_shelib_fref -d $2)/$(_shelib_fref -n $2).lxg;
-  fi
-}
-
-###############################################################################
-
-_shelib__init(){
-  _shelib_trace "Current script folder: $(_shelib_fref -d), filename: $(_shelib_fref -n), args: [$@]"
-  if [ -z "$shelib_step_done_file" ] ; then
-    shelib_step_done_file=$(_shelib_sdf -p); _shelib_trace "Init the done file: $shelib_step_done_file";
-    if [ ! -f "$shelib_step_done_file" ] ; then
-      _shelib_trace "Create file $(basename $shelib_step_done_file) in dir $(dirname $shelib_step_done_file)";
-      mkdir -p $(dirname $shelib_step_done_file) && > $shelib_step_done_file;
-    fi
-  fi
-}
 
 _shelib__init $@;
-
-###############################################################################
-
-_shelib(){
-  if [ ! -z "$2" ] ; then
-    _shelib_$1 ${@:2}; # exec the shelib methods
-  fi
-}
-
-if [ ! -z "$sh" ] ; then
-  _sh=$sh; _shelib_trace "Var _sh vs sh: [$_sh, $sh]";
-fi
-
-shelib=_shelib; sh=$shelib; # define $shelib and $sh as the short func name
-
-###############################################################################
-
-# SHELIB="./main/shelib.so" && . $(dirname `pwd`/$0)/$SHELIB;
 
 ###############################################################################
 
