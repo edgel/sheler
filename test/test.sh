@@ -36,6 +36,6 @@ test_error(){
   $sh error "error msg";
 }
 
-$sh steps "{test_debug,test_info,test_warn,test_error}" $@;
+$sh steps "{test_debug,test_info,test_warn,test_error}" "$@";
 
 ###############################################################################
