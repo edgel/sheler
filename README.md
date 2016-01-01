@@ -1,1 +1,2 @@
 # shelib
+sh build.sh
