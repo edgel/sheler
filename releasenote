@@ -1,0 +1,31 @@
+Shell Library ($sh), a new simple shell api for bash.
+
+Version: 1.0
+
+Methods:
+  trace;
+  debug;
+  info;
+  warn;
+  error;
+  enable;
+  disable;
+
+  fref -d <ref-path> | -f <ref-path> | -n <ref-path>;
+  fman -rm|-ls|-cp|-mv|-ln <folder> <filename-pattern>;
+  copy -|<owner> <''|.tar|.tgz|.tar.gz|.zip> <name> <from> <to>;
+
+  sdf -p [shell-path] | -c [shell-path] | -r [shell-path] <step-id>;
+  step -s | -d | <step-name> [step id];
+  steps <step-name:id> * ;
+
+  exec -l <shell-path> <arguments> | -x <shell-path> <arguments>;
+
+Global varibles:
+  shelib_enable_debug, 
+  shelib_curr_step_id, 
+  shelib_step_done_file
+
+Dependencies: 
+  echo, pwd, ls, cat, grep, cut, sed, date, rm, mkdir, chown, diranme, 
+  filename, tar, zip, unzip, eval, xargs, ssh, scp
