@@ -7,13 +7,13 @@
 #   sh build.sh -c [step-name];
 #   sh build.sh -d [step-name] | -x [step-name] | -a;
 # 
-#   [step-name]: defined in demo.sh, test_debug,test_info,test_warn,test_error
+#   [step-name]: defined in test.sh, test_debug,test_info,test_warn,test_error
 # 
 # Sample:
 #   export SHELIB_VERSION="1.0"; sh build.sh -c; sh build.sh -d; sh build.sh -x; sh build.sh -a;
 ###################################################################################################
 
-SHELIB="./main/.shelib.rc"; SHELIB_DEMO="./demo/demo.sh"; SHELIB_BUILD="./build.sh";
+SHELIB="./main/.shelib.rc"; SHELIB_DEMO="./test/test.sh"; SHELIB_BUILD="./build.sh";
 
 if [ ! -f $SHELIB] || [ ! -f $SHELIB_DEMO ] ; then
   echo "No [$SHELIB] and [$SHELIB_DEMO] found!"; exit 1;
