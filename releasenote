@@ -22,7 +22,7 @@ Releated Files:
   $SHELIB_SREF.lgx
   $SHELIB_SREF.sdf
 
-Dependencies: 
+Dependencies:
   echo, pwd, ls, cat, grep, cut, sed, date, rm, mkdir, chown, dirname, 
   filename, tar, zip, unzip, eval, xargs, ssh, scp, expect
 
