@@ -86,8 +86,11 @@ _shelib_step(){
 }
 
 _shelib_dref(){
-  if [ ! -z $SHELIB__DREF ] ; then echo $SHELIB__DREF; fi 
-  export SHELIB__DREF=~/.shelib/$(shelib_file -r $1) && echo $SHELIB__DREF;
+  if [ ! -z $SHELIB__DREF ] ; then
+    echo $SHELIB__DREF;
+  else
+    export SHELIB__DREF=~/.shelib/$(shelib_file -r $1) && echo $SHELIB__DREF;
+  fi
   if [ ! -f "$SHELIB__DREF.sdf" ] ; then
     mkdir -p $(dirname $SHELIB__DREF.sdf) && echo "" > $SHELIB__DREF.sdf;
   fi
