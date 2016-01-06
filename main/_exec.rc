@@ -6,19 +6,19 @@ shelib_exec(){
   if [ "-e" == "$1" ] ; then
     "${@:2}"; _result=$?;
   elif [ "-l" == "$1" ] ; then
-    if [ -f $(_shelib_sref).log ] ; then
-      ( echo -e "\n--\n" && cat $(_shelib_sref).log ) >> $(_shelib_sref).lgx;
+    if [ -f $(_shelib_log_ref).log ] ; then
+      ( echo -e "\n--\n" && cat $(_shelib_log_ref).log ) >> $(_shelib_log_ref).lgx;
     fi
-    _shelib_exec $(_shelib_sref).lgr "${@:2}" 2>&1 | tee $(_shelib_sref).log; 
-    _result=$(cat $(_shelib_sref).lgr; rm -f $(_shelib_sref).lgr);
+    _shelib_exec $(_shelib_log_ref).lgr "${@:2}" 2>&1 | tee $(_shelib_log_ref).log; 
+    _result=$(cat $(_shelib_log_ref).lgr; rm -f $(_shelib_log_ref).lgr);
   elif [ "-x" == "$1" ] ; then
-    if [ -f $(_shelib_sref).log ] ; then
-      ( echo -e "\n--\n" && cat $(_shelib_sref).log ) >> $(_shelib_sref).lgx;
+    if [ -f $(_shelib_log_ref).log ] ; then
+      ( echo -e "\n--\n" && cat $(_shelib_log_ref).log ) >> $(_shelib_log_ref).lgx;
     fi
     # PS4 Other Options: ${SHLVL},${BASH_SUBSHELL} $@ $? $1 \t
     set -x; PS4='	| ${BASH_SOURCE} ${LINENO} ${FUNCNAME}() ' \
-    _shelib_exec $(_shelib_sref).lgr "${@:2}" 2>&1 | tee $(_shelib_sref).log;
-    _result=$(cat $(_shelib_sref).lgr; rm -f $(_shelib_sref).lgr);
+    _shelib_exec $(_shelib_log_ref).lgr "${@:2}" 2>&1 | tee $(_shelib_log_ref).log;
+    _result=$(cat $(_shelib_log_ref).lgr; rm -f $(_shelib_log_ref).lgr);
   else
     shelib_echo -t "Unknown option [$1]"; exit 1;
   fi
@@ -31,7 +31,7 @@ _shelib_exec(){
   "${@:2}"; echo $? > $1; # _shelib_exec <rs-file> <command>
 }
 
-_shelib_sref(){
+_shelib_log_ref(){
   if [ ! -z $SHELIB__SREF ] ; then
     echo $SHELIB__SREF;
   else

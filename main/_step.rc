@@ -41,12 +41,12 @@ shelib_step(){
   elif [ "-c" == $1 ] || [ "-clean" == $1 ] ; then
     if [ -z "$2" ] ; then # clean
       shelib_echo -t "Clean step done files for [$2]";
-      shelib_file -rm "$(dirname `_shelib_dref`)" "*.sdf";
+      shelib_file -rm "$(dirname `_shelib_sdf_ref`)" "*.sdf";
 
     else
       shelib_echo -t "Clean steps: [${@:3}] for [$2]";
       for _step_id in ${@:3} ; do
-        local _dref_path=$(_shelib_dref `readlink -f "$2"`);
+        local _dref_path=$(_shelib_sdf_ref `readlink -f "$2"`);
         shelib_echo -t "Clean step: [$_step_id] for [$_dref_path]"; 
 
         shelib_echo -t "sed \"s/^$_step_id done at /$_step_id ---- at /g\""
@@ -62,36 +62,36 @@ shelib_step(){
 
 _shelib_step(){
   if [ $1 == '-c' ] ; then
-    local _history=$(shelib_file -get `_shelib_dref`.sdf "^$2 done at ");
+    local _history=$(shelib_file -get `_shelib_sdf_ref`.sdf "^$2 done at ");
     if [ ! -z "$_history" ] ; then return 2; fi
 
-    _history=$(shelib_file -get `_shelib_dref`.sdf "^$2 start at ");
+    _history=$(shelib_file -get `_shelib_sdf_ref`.sdf "^$2 start at ");
     if [ ! -z "$_history" ] ; then return 1; fi
 
     return 0;
 
   elif [ $1 == '-s' ] ; then
-    echo "$2 start at $(_shelib_date)" >> $(_shelib_dref).sdf;
+    echo "$2 start at $(_shelib_date)" >> $(_shelib_sdf_ref).sdf;
 
   elif [ $1 == '-d' ] ; then
     if [ $? -ne 0 ] ; then exit $?; fi
-    echo "$2 done at $(_shelib_date)" >> $(_shelib_dref).sdf;
+    echo "$2 done at $(_shelib_date)" >> $(_shelib_sdf_ref).sdf;
 
   elif [ $1 == '-r' ] ; then
-    echo "$2 resume at $(_shelib_date)" >> $(_shelib_dref).sdf;
+    echo "$2 resume at $(_shelib_date)" >> $(_shelib_sdf_ref).sdf;
 
   elif [ $1 == '-k' ] ; then
-    echo "$2 skip at $(_shelib_date)" >> $(_shelib_dref).sdf;
+    echo "$2 skip at $(_shelib_date)" >> $(_shelib_sdf_ref).sdf;
   fi
 }
 
-_shelib_dref(){
-  if [ ! -z $SHELIB__DREF ] ; then
-    echo $SHELIB__DREF;
+_shelib_sdf_ref(){
+  if [ ! -z $SHELIB__SREF ] ; then
+    echo $SHELIB__SREF;
   else
-    export SHELIB__DREF=~/.shelib/$(shelib_file -r $1) && echo $SHELIB__DREF;
+    export SHELIB__SREF=$(shelib_file -r $1) && echo $SHELIB__SREF;
   fi
-  if [ ! -f "$SHELIB__DREF.sdf" ] ; then
-    mkdir -p $(dirname $SHELIB__DREF.sdf) && echo "" > $SHELIB__DREF.sdf;
+  if [ ! -f "$SHELIB__SREF.sdf" ] ; then
+    mkdir -p $(dirname $SHELIB__SREF.sdf) && echo "" > $SHELIB__SREF.sdf;
   fi
 }

@@ -21,12 +21,9 @@ Refer Shell Style:
   https://google-styleguide.googlecode.com/svn/trunk/shell.xml
 
 Releated Files:
-  $_SHELIB_SREF_PATH.log
-  $_SHELIB_SREF_PATH.lgx
-  $_SHELIB_DREF_PATH.sdf
-
-  $_SHELIB_SREF_PATH.lgr
-  $_SHELIB_DREF_PATH.tmp
+  $SHELIB__SREF.log
+  $SHELIB__SREF.lgx
+  $SHELIB__SREF.sdf
 
 Dependencies: 
   echo, pwd, ls, cat, grep, cut, sed, date, rm, mkdir, chown, dirname, 
