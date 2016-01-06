@@ -1,4 +1,7 @@
 
+== 2016-03-01, Shelib 2.0 ==
+- Modulized and simplify the exist commands
+
 == 2016-01-01, Shelib 1.2 ==
 - Change option -x to -d for "$sh exec"
 

@@ -1,36 +1,24 @@
 
-Shell Library ($sh), a simple shell library for the bash scripts.
+Shell Library ($sh), a simple modulized library of bash commands.
 
-Version: 1.2
+Version: 2.0
 
 Public Varibles:
-  SHELIB_SHOW_TRACE; 
+  SHELIB_LEVEL=[-2:trace|-1:debug|0:info|1:warn|2:error]; 
 
 Public Methods:
-  $sh debug <msg> | info <msg> | warn <msg> | error <msg>;
-  $sh enable <debug | info | warn | error>;
-  $sh disable <debug | info | warn | error>;
+  $sh echo -t:trace|-d:debug|-i:info|-w:warn|-e:error ${message};
+  $sh file -d:dir|-n:name|-r:refer|-rm|-ls|-cp|-mv|-ln ${file};
+  $sh step -s:start|-c:clean <${step}>*;
+  $sh exec -e:exit|-l:log|-x:ext ${command};
+  $sh ssh
+  $sh scp
+  $sh expect
+  $sh report -log ${log};
+  $sh docker -r:run|-s:start|-k:kill|-rm|-export|-import ${app};
 
-  $sh exec <-e|-l|-d> <command>;
-  $sh fman -rm|-ls|-cp|-mv|-ln <folder> <filename-pattern>;
-  $sh fref -d <ref-path> | -f <ref-path> | -n <ref-path> | -p <ref-path>;
-
-  $sh steps (<step-name:id>)*;
-  $sh step -s | -d | <step-name> [step-id];
-  $sh done -p [shell-path] | -c [shell-path] | -r [shell-path] <step-id>;
-
-  $sh expect <timeout-in-seconds> <script-path> (<prompt> <value>)+;
-  $sh ssh -keygen | -auth | -agent | -keyadd | -know [id] [host];
-  $sh scp -|<owner> <''|.tar|.tgz|.tar.gz|.zip> <name> <from> <to>;
-
-Private Varibles:
-  _SHELIB_SHOW_<DEBUG|INFO|WARN|ERROR>;
-  _SHELIB_SREF_PATH; 
-  _SHELIB_DREF_PATH;
-  _SHELIB_CURR_STEP;
-
-Private Methods:
-  _shelib_trace; _shelib_logf; _shelib_4tee;
+Refer Shell Style:
+  https://google-styleguide.googlecode.com/svn/trunk/shell.xml
 
 Releated Files:
   $_SHELIB_SREF_PATH.log
