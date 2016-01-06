@@ -17,9 +17,6 @@ Public Methods:
   $sh report -log ${log};
   $sh docker -r:run|-s:start|-k:kill|-rm|-export|-import ${app};
 
-Refer Shell Style:
-  https://google-styleguide.googlecode.com/svn/trunk/shell.xml
-
 Releated Files:
   $SHELIB_SREF.log
   $SHELIB_SREF.lgx
