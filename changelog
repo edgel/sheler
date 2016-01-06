@@ -1,3 +1,22 @@
+
+== 2016-01-01, Shelib 1.2 ==
+- Change option -x to -d for "$sh exec"
+
+- Add "$sh expect"
+- Add "$sh ssh"
+- Change "$sh copy" to "$sh scp"
+
+- Change logname *.lxg to *.log
+- Change logname *.l*g.x to *.lgx
+- Change logname *.l*g.rs to *.lgr
+
+- Remove donename *.done.old
+- Change donename *.done to *.sdf
+- Change donename *.done.tmp to *.tmp
+- Change donepath .step/* to .shelib/*
+
+- Refine naming rule: [_]SHELIB* [_]shelib*
+
 == 2015-12-15, Shelib 1.1 ==
 - Add option -e for method "$sh exec"
 - Change "$sh sdf" to "$sh done"

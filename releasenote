@@ -1,30 +1,47 @@
 
 Shell Library ($sh), a simple shell library for the bash scripts.
 
-Version: 1.1
+Version: 1.2
 
-Methods:
-  $sh exec <-e|-l|-x> <command>;
+Public Varibles:
+  SHELIB_SHOW_TRACE; 
 
-  $sh steps <step-name:id> * ;
+Public Methods:
+  $sh debug <msg> | info <msg> | warn <msg> | error <msg>;
+  $sh enable <debug | info | warn | error>;
+  $sh disable <debug | info | warn | error>;
+
+  $sh exec <-e|-l|-d> <command>;
+  $sh fman -rm|-ls|-cp|-mv|-ln <folder> <filename-pattern>;
+  $sh fref -d <ref-path> | -f <ref-path> | -n <ref-path> | -p <ref-path>;
+
+  $sh steps (<step-name:id>)*;
   $sh step -s | -d | <step-name> [step-id];
   $sh done -p [shell-path] | -c [shell-path] | -r [shell-path] <step-id>;
 
-  $sh enable <debug | info | warn | error>;
-  $sh disable <debug | info | warn | error>;
-  $sh logf <msg> | debug <msg> | info <msg> | warn <msg> | error <msg>;
+  $sh expect <timeout-in-seconds> <script-path> (<prompt> <value>)+;
+  $sh ssh -keygen | -auth | -agent | -keyadd | -know [id] [host];
+  $sh scp -|<owner> <''|.tar|.tgz|.tar.gz|.zip> <name> <from> <to>;
 
-  $sh fref -d <ref-path> | -f <ref-path> | -n <ref-path> | -p <ref-path>;
-  $sh fman -rm|-ls|-cp|-mv|-ln <folder> <filename-pattern>;
-  $sh copy -|<owner> <''|.tar|.tgz|.tar.gz|.zip> <name> <from> <to>;
+Private Varibles:
+  _SHELIB_SHOW_<DEBUG|INFO|WARN|ERROR>;
+  _SHELIB_SREF_PATH; 
+  _SHELIB_DREF_PATH;
+  _SHELIB_CURR_STEP;
 
-Global varibles:
-  shelib_enable_<debug|info|warn|error>
+Private Methods:
+  _shelib_trace; _shelib_logf; _shelib_4tee;
 
-Internal varibles:
-  shelib_fref_path, shelib_done_file, shelib_curr_stepid
+Releated Files:
+  $_SHELIB_SREF_PATH.log
+  $_SHELIB_SREF_PATH.lgx
+  $_SHELIB_DREF_PATH.sdf
+
+  $_SHELIB_SREF_PATH.lgr
+  $_SHELIB_DREF_PATH.tmp
 
 Dependencies: 
-  echo, pwd, ls, cat, grep, cut, sed, date, rm, mkdir, chown, diranme, 
-  filename, tar, zip, unzip, eval, xargs, ssh, scp
+  echo, pwd, ls, cat, grep, cut, sed, date, rm, mkdir, chown, dirname, 
+  filename, tar, zip, unzip, eval, xargs, ssh, scp, expect
+
 

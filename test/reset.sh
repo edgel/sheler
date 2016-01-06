@@ -6,32 +6,13 @@ if [ -z $SHELIB_TARGET ] ; then SHELIB_TARGET="../main/.shelib.rc"; fi; . $SHELI
 
 ###################################################################################################
 
-test(){
-  echo test;
-}
-
-test_debug(){
-  $sh debug "debug xxx";
-
-  $sh enable DEBUG;
-  $sh debug "debug msg";
-
-  $sh disable DEBUG;
-  $sh debug "debug xxx";
-}
-
-test_info(){
-  $sh info "info msg";
-}
-
-test_warn(){
-  $sh warn "warn msg";
-}
-
-test_error(){
-  $sh error "error msg";
-}
-
-$sh steps "{test_debug,test_info,test_warn,test_error}" $@;
+if [ -z "$1" ] ; then
+  $sh info '$sh done -r ./auto.sh test_error';
+  $sh done -r ./auto.sh test_error
+else
+  $sh info "Clean script step for $@";
+  $sh done -r "$@";
+  $sh info "## The [$0 $@] result: [$?] ##"; exit $?;
+fi
 
 ###################################################################################################
