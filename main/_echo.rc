@@ -1,0 +1,49 @@
+###############################################################################
+#!/bin/bash
+###############################################################################
+
+shelib_echo(){
+  local _level_value=9; local _level="$1"; local _msg="${@:2}";
+
+  if [ "-t" == "$1" ] || [ "-trace" == "$1" ] ; then
+    _level="TRACE"; _level_value=-2;
+  elif [ "-d" == "$1" ] || [ "-debug" == "$1" ] ; then
+    _level="DEBUG"; _level_value=-1;
+  elif [ "-i" == "$1" ] || [ "-info" == "$1" ] ; then
+    _level="INFO"; _level_value=0;
+  elif [ "-w" == "$1" ] || [ "-warn" == "$1" ] ; then
+    _level="WARN"; _level_value=1;
+  elif [ "-e" == "$1" ] || [ "-error" == "$1" ] ; then
+    _level="ERROR"; _level_value=2;
+  fi
+
+  if [ ${_level_value} -lt $SHELIB_LEVEL ] ; then
+    return;
+  fi
+
+  if [ "-t" == "$1" ] || [ "-trace" == "$1" ] ; then
+    echo -e ">> $_msg"
+  else
+    echo -e "$(_shelib_date) [$0] $_level $_msg"
+  fi
+}
+
+shelib_debug(){
+  shelib_echo -d "$@"
+}
+
+shelib_info(){
+  shelib_echo -i "$@"
+}
+
+shelib_warn(){
+  shelib_echo -w "$@"
+}
+
+shelib_error(){
+  shelib_echo -e "$@"
+}
+
+_shelib_date(){
+  date +%Y-%m-%d' '%H:%M:%S.%N;
+}

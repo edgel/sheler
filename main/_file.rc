@@ -1,0 +1,45 @@
+###############################################################################
+#!/bin/bash
+###############################################################################
+
+shelib_file(){
+  local _file=$2; if [ -z "$_file" ] ; then 
+    _file=$SHELIB_SCRIPT; 
+  fi
+
+  if [ "-d" == "$1" ] || [ "-dir" == "$1" ] ; then
+    dirname $_file;
+
+  elif [ "-n" == "$1" ] || [ "-name" == "$1" ] ; then
+    local _name=$(basename $_file); echo ${_name%.*};
+
+  elif [ "-r" == "$1" ] || [ "-refer" == "$1" ]  ; then
+    echo $(shelib_file -d $_file)/$(shelib_file -n $_file);
+
+  elif [ "-rm" == "$1" ] ; then
+    find $2 -name "$3" | xargs rm -f;
+
+  elif [ "-ls" == "$1" ] ; then
+    find $2 -name "$3" | xargs ls -l;
+
+  elif [ "-cp" == "$1" ] ; then
+    find $2 -name "$3" | cp -t $4;
+
+  elif [ "-mv" == "$1" ] ; then
+    find $2 -name "$3" | mv -t $4;
+
+  elif [ "-ln" == "$1" ] ; then
+    find $2 -name "$3" | ln -s -t $4;
+
+  elif [ "-get" == "$1" ] ; then
+    cat "$2" | grep "$3";
+  fi
+}
+
+shelib_fref(){
+  shelib_file "$@"
+}
+
+shelib_fman(){
+  shelib_file "$@"
+}

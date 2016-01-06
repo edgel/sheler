@@ -1,0 +1,94 @@
+###############################################################################
+#!/bin/bash
+###############################################################################
+
+shelib_step(){
+  if [ "-s" == $1 ] || [ "-start" == $1 ] ; then
+    local _step_ids="${@:2}"; local _step_id=""; local _step_name="";
+    shelib_echo -t "Start steps [$_step_ids]";
+
+    for _step_id in $_step_ids ; do
+      _step_name=$(echo $_step_id|cut -d : -f 1);
+      shelib_echo -t "--------------------------------------------";
+      shelib_echo -t "-- Step { name: $_step_name, id: $_step_id }";
+      shelib_echo -t "-- ";
+      if [ "$_step_id" == "$_step_name" ] ; then
+        shelib_echo -t "Run step [$_step_id]";
+        $_step_name;
+        if [ $? -ne 0 ] ; then exit $?; fi; continue;
+      fi
+      shelib_echo -t "Check step [$_step_id]";
+      _shelib_step -c $_step_id;
+      local _result=$?;
+      if [ $_result -eq 0 ] ; then
+        shelib_echo -t "Start step [$_step_id]";
+        _shelib_step -s $_step_id;
+        $_step_name;
+        _shelib_step -d $_step_id;
+        shelib_echo -t "Done step [$_step_id]";
+      elif [ $_result -eq 1 ] ; then
+        shelib_echo -t "Rusume step [$_step_id]";
+        _shelib_step -r $_step_id;
+        $_step_name;
+        _shelib_step -d $_step_id;
+        shelib_echo -t "Done step [$_step_id]";
+      else
+        shelib_echo -t "Skip step [$_step_id]";
+        _shelib_step -k $_step_id;
+      fi
+    done
+
+  elif [ "-c" == $1 ] || [ "-clean" == $1 ] ; then
+    if [ -z "$2" ] ; then # clean
+      shelib_echo -t "Clean step done files for [$2]";
+      shelib_file -rm "$(dirname `_shelib_dref`)" "*.sdf";
+
+    else
+      shelib_echo -t "Clean steps: [${@:3}] for [$2]";
+      for _step_id in ${@:3} ; do
+        local _dref_path=$(_shelib_dref `readlink -f "$2"`);
+        shelib_echo -t "Clean step: [$_step_id] for [$_dref_path]"; 
+
+        shelib_echo -t "sed \"s/^$_step_id done at /$_step_id ---- at /g\""
+        cat $_dref_path.sdf > $_dref_path.tmp \
+        && sed "s/^$_step_id done at /$_step_id ---- at /g" \
+        $_dref_path.tmp > $_dref_path.sdf && rm $_dref_path.tmp;
+
+        shelib_echo -t "Clean step done with [$?]"; 
+      done
+    fi
+  fi
+}
+
+_shelib_step(){
+  if [ $1 == '-c' ] ; then
+    local _history=$(shelib_file -get `_shelib_dref`.sdf "^$2 done at ");
+    if [ ! -z "$_history" ] ; then return 2; fi
+
+    _history=$(shelib_file -get `_shelib_dref`.sdf "^$2 start at ");
+    if [ ! -z "$_history" ] ; then return 1; fi
+
+    return 0;
+
+  elif [ $1 == '-s' ] ; then
+    echo "$2 start at $(_shelib_date)" >> $(_shelib_dref).sdf;
+
+  elif [ $1 == '-d' ] ; then
+    if [ $? -ne 0 ] ; then exit $?; fi
+    echo "$2 done at $(_shelib_date)" >> $(_shelib_dref).sdf;
+
+  elif [ $1 == '-r' ] ; then
+    echo "$2 resume at $(_shelib_date)" >> $(_shelib_dref).sdf;
+
+  elif [ $1 == '-k' ] ; then
+    echo "$2 skip at $(_shelib_date)" >> $(_shelib_dref).sdf;
+  fi
+}
+
+_shelib_dref(){
+  if [ ! -z $SHELIB__DREF ] ; then echo $SHELIB__DREF; fi 
+  export SHELIB__DREF=~/.shelib/$(shelib_file -r $1) && echo $SHELIB__DREF;
+  if [ ! -f "$SHELIB__DREF.sdf" ] ; then
+    mkdir -p $(dirname $SHELIB__DREF.sdf) && echo "" > $SHELIB__DREF.sdf;
+  fi
+}
