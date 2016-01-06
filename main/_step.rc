@@ -86,12 +86,12 @@ _shelib_step(){
 }
 
 _shelib_sdf_ref(){
-  if [ ! -z $SHELIB__SREF ] ; then
-    echo $SHELIB__SREF;
+  if [ ! -z $SHELIB_SREF ] ; then
+    echo $SHELIB_SREF;
   else
-    export SHELIB__SREF=$(shelib_file -r $1) && echo $SHELIB__SREF;
+    export SHELIB_SREF=$(shelib_file -r $1) && echo $SHELIB_SREF;
   fi
-  if [ ! -f "$SHELIB__SREF.sdf" ] ; then
-    mkdir -p $(dirname $SHELIB__SREF.sdf) && echo "" > $SHELIB__SREF.sdf;
+  if [ ! -f "$SHELIB_SREF.sdf" ] ; then
+    mkdir -p $(dirname $SHELIB_SREF.sdf) && echo "" > $SHELIB_SREF.sdf;
   fi
 }

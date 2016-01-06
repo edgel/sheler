@@ -32,10 +32,10 @@ _shelib_exec(){
 }
 
 _shelib_log_ref(){
-  if [ ! -z $SHELIB__SREF ] ; then
-    echo $SHELIB__SREF;
+  if [ ! -z $SHELIB_SREF ] ; then
+    echo $SHELIB_SREF;
   else
-    export SHELIB__SREF=$(shelib_file -r $1) && echo $SHELIB__SREF;
+    export SHELIB_SREF=$(shelib_file -r $1) && echo $SHELIB_SREF;
   fi
 }
 
