@@ -1,2 +1,2 @@
 # Sheler
-Shell Library ($sh), a new simple shell api for bash.
+Shell Library Manager ($sh) for bash
