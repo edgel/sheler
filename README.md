@@ -1,2 +1,2 @@
 # Sheler
-Shell Library Manager for system management
+Shell Manager for system management
