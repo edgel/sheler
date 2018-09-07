@@ -1,2 +1,2 @@
 # Sheler
-Shell Library Manager ($sh) for bash
+Shell Library Manager for system management
